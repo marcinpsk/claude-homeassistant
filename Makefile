@@ -11,7 +11,6 @@ HA_HOST ?= your_homeassistant_host
 HA_REMOTE_PATH ?= /config/
 LOCAL_CONFIG_PATH ?= config/
 BACKUP_DIR ?= backups
-VENV_PATH ?= .venv
 TOOLS_PATH ?= tools
 
 # Colors for output
@@ -31,7 +30,7 @@ help:
 	@echo "  $(YELLOW)push$(NC)     - Push local config to Home Assistant (with validation)"
 	@echo "  $(YELLOW)validate$(NC) - Run all validation tests"
 	@echo "  $(YELLOW)backup$(NC)   - Create timestamped backup of current config"
-	@echo "  $(YELLOW)setup$(NC)    - Set up Python environment and dependencies"
+	@echo "  $(YELLOW)setup$(NC)    - Set up Python environment with uv"
 	@echo "  $(YELLOW)test$(NC)     - Run validation tests (alias for validate)"
 	@echo "  $(YELLOW)status$(NC)   - Show configuration status and entity counts"
 	@echo "  $(YELLOW)entities$(NC) - Explore available entities (usage: make entities [ARGS='options'])"
@@ -56,13 +55,13 @@ push: check-env
 	@rsync -avz --delete --exclude-from=.rsync-excludes-push $(LOCAL_CONFIG_PATH) $(HA_HOST):$(HA_REMOTE_PATH)
 	@echo "$(GREEN)Configuration pushed successfully!$(NC)"
 	@echo "$(GREEN)Reloading Home Assistant configuration...$(NC)"
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/reload_config.py
+	@uv run python $(TOOLS_PATH)/reload_config.py
 	@echo "$(GREEN)Configuration deployment complete!$(NC)"
 
 # Run all validation tests
 validate: check-setup
 	@echo "$(GREEN)Running Home Assistant configuration validation...$(NC)"
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/run_tests.py
+	@uv run python $(TOOLS_PATH)/run_tests.py
 
 # Alias for validate
 test: validate
@@ -78,10 +77,9 @@ backup:
 
 # Set up Python environment and dependencies
 setup:
-	@echo "$(GREEN)Setting up Python environment...$(NC)"
-	@python3 -m venv $(VENV_PATH)
-	@. $(VENV_PATH)/bin/activate && pip install --upgrade pip
-	@. $(VENV_PATH)/bin/activate && pip install homeassistant voluptuous pyyaml jsonschema requests
+	@echo "$(GREEN)Setting up Python environment with uv...$(NC)"
+	@command -v uv >/dev/null 2>&1 || { echo "$(YELLOW)Installing uv...$(NC)"; curl -LsSf https://astral.sh/uv/install.sh | sh; }
+	@uv sync
 	@echo "$(GREEN)Setup complete!$(NC)"
 
 # Show configuration status
@@ -103,7 +101,7 @@ status: check-setup
 	fi
 	@echo ""
 	@echo "$(YELLOW)Entity Summary:$(NC)"
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/reference_validator.py 2>/dev/null | grep "Examples:" -A 1 -B 1 | head -20
+	@uv run python $(TOOLS_PATH)/reference_validator.py 2>/dev/null | grep "Examples:" -A 1 -B 1 | head -20
 
 # Explore available Home Assistant entities
 entities: check-setup
@@ -115,12 +113,12 @@ entities: check-setup
 	@echo "  make entities ARGS='--search temp'     - Search for temperature entities"
 	@echo "  make entities ARGS='--full'            - Show complete detailed output"
 	@echo ""
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/entity_explorer.py $(ARGS)
+	@uv run python $(TOOLS_PATH)/entity_explorer.py $(ARGS)
 
 # Reload Home Assistant configuration via API
 reload: check-setup
 	@echo "$(GREEN)Reloading Home Assistant configuration...$(NC)"
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/reload_config.py
+	@uv run python $(TOOLS_PATH)/reload_config.py
 
 # Format YAML files (specific files or all in config directory)
 format-yaml:
@@ -156,8 +154,8 @@ clean:
 
 # Check if setup is complete
 check-setup:
-	@if [ ! -d "$(VENV_PATH)" ]; then \
-		echo "$(RED)Python environment not found. Run 'direnv allow' or 'uv sync' first.$(NC)"; \
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "$(RED)uv not found. Run 'make setup' or install uv: https://docs.astral.sh/uv/$(NC)"; \
 		exit 1; \
 	fi
 	@if [ ! -f "$(TOOLS_PATH)/run_tests.py" ]; then \
@@ -204,13 +202,13 @@ pull-storage:
 
 # Individual validation targets
 validate-yaml: check-setup
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/yaml_validator.py
+	@uv run python $(TOOLS_PATH)/yaml_validator.py
 
 validate-references: check-setup
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/reference_validator.py
+	@uv run python $(TOOLS_PATH)/reference_validator.py
 
 validate-ha: check-setup
-	@. $(VENV_PATH)/bin/activate && python $(TOOLS_PATH)/ha_official_validator.py
+	@uv run python $(TOOLS_PATH)/ha_official_validator.py
 
 # SSH connectivity test
 test-ssh:
@@ -222,4 +220,4 @@ test-ssh:
 # Rsync exclude integration tests
 test-rsync:
 	@echo "$(GREEN)Running rsync exclude integration tests...$(NC)"
-	@python3 -m pytest tests/test_rsync_excludes.py
+	@uv run python -m pytest tests/test_rsync_excludes.py
