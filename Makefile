@@ -157,7 +157,7 @@ clean:
 # Check if setup is complete
 check-setup:
 	@if [ ! -d "$(VENV_PATH)" ]; then \
-		echo "$(RED)Python environment not found. Run 'make setup' first.$(NC)"; \
+		echo "$(RED)Python environment not found. Run 'direnv allow' or 'uv sync' first.$(NC)"; \
 		exit 1; \
 	fi
 	@if [ ! -f "$(TOOLS_PATH)/run_tests.py" ]; then \

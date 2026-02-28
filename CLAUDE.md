@@ -10,7 +10,7 @@ This repository manages Home Assistant configuration files with automated valida
 
 - `config/` - Contains all Home Assistant configuration files (synced from HA instance)
 - `tools/` - Validation and testing scripts
-- `venv/` - Python virtual environment with dependencies
+- `.venv/` - Python virtual environment (managed by uv via `.envrc`)
 - `temp/` - Temporary directory for Claude to write and test code before moving to final locations
 - `Makefile` - Commands for pulling/pushing configuration
 - `.claude-code/` - Project-specific Claude Code settings and hooks
@@ -151,8 +151,8 @@ The system tracks entities across these domains:
 - **Blueprint files** use `!input` tags which are normal and expected
 - **Secrets are skipped** during validation for security
 - **SSH access required** for pull/push operations
-- **Python venv required** for validation tools
-- All python tools need to be run with `source venv/bin/activate && python <tool_path>`
+- **Python venv required** for validation tools (managed by uv + direnv)
+- Run `direnv allow` or `uv sync` to set up the environment — no `make setup` needed
 
 ## Troubleshooting
 
@@ -168,8 +168,8 @@ The system tracks entities across these domains:
 3. Check SSH config in `~/.ssh/config`
 
 ### Missing Dependencies
-1. Activate venv: `source venv/bin/activate`
-2. Install requirements: `pip install homeassistant voluptuous pyyaml`
+1. Run `uv sync` to install all dependencies
+2. Or `direnv allow` to auto-setup on directory entry
 
 ## Security
 
