@@ -1,13 +1,7 @@
 # Home Assistant Configuration Management - .gitignore
 
-# Secrets and sensitive data
-config/secrets.yaml
-config/.storage/
-config/home-assistant.log*
-config/OZW_Log.txt
-config/ip_bans.yaml
-config/.uuid
-config/.HA_VERSION
+# Home Assistant config directory (synced from HA instance, not tracked)
+config/
 
 # Python
 .venv/
@@ -73,31 +67,11 @@ node_modules/
 *.pem
 *.key
 id_rsa*
-config/*.key
-config/*.token
-config/*.pid
-config/*.uuid
 
 # Database files
 *.db
 *.db-shm
 *.db-wal
-
-# Home Assistant specific temporary files
-config/deps/
-config/tts/
-config/.shopping_list.json
-config/.google.token
-config/nest/
-config/.cloud/
-
-# Custom components (managed by HACS)
-config/custom_components/
-
-# Personal configuration that shouldn't be shared
-config/known_devices.yaml
-config/automations_backup/
-config/scripts_backup/
 
 # Test artifacts
 .pytest_cache/
